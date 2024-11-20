@@ -170,7 +170,7 @@ class DINOEncoder(nn.Module):
         self.obs_shape = obs_shape
         self.feature_dim = feature_dim
 
-        self.fc = nn.Linear(768, self.feature_dim)
+        self.fc = nn.Linear(384 * (obs_shape[0] / 3), self.feature_dim)
         self.ln = nn.LayerNorm(self.feature_dim)
         self.dino = None
         self.outputs = dict()

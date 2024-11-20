@@ -1,33 +1,6 @@
 import numpy as np
 import gymnasium as gym
 
-
-def make(
-    domain_name,
-    task_name,
-    seed,
-    from_pixels,
-    height,
-    width,
-    cameras=range(1),
-):
-    if "robosuite" in domain_name:
-        env = RobosuiteWrapper(
-            domain_name,
-            from_pixels=from_pixels,
-            cameras=cameras,
-            height=height,
-            width=width,
-        )
-    elif "Franka" in domain_name:
-        import gym_franka
-
-        env = gym.make(domain_name)
-    else:
-        raise ValueError(f"Domain name {domain_name} not supported")
-    return env
-
-
 class RobosuiteWrapper(gym.Env):
     def __init__(
         self,
@@ -170,3 +143,25 @@ class RobosuiteWrapper(gym.Env):
     @property
     def observation_space(self):
         return self._observation_space
+    
+def make_env(
+    domain_name,
+    task_name,
+    seed,
+    from_pixels,
+    height,
+    width,
+    cameras=range(1),
+):
+    if "robosuite" in domain_name:
+        env = RobosuiteWrapper(
+            domain_name,
+            from_pixels=from_pixels,
+            cameras=cameras,
+            height=height,
+            width=width,
+        )
+    else:
+        raise ValueError(f"Domain name {domain_name} not supported")
+    return env
+

@@ -266,6 +266,8 @@ class RadSacAgent(object):
         self.z_demo_cache = {}
         self.ref_one_step_dist = None
 
+        self.dino_embed_size = 384 * int(obs_shape[0] / 3)
+
         self.augs_funcs = {}
 
         aug_to_func = {
@@ -714,7 +716,7 @@ class DINOE2CSacAgent(RadSacAgent):
             dkl, mse, ref_kl, predict = self.e2c(
                 dino_obs, action, dino_next_obs, None, None
             )
-            loss = dkl + mse * 768 + ref_kl
+            loss = dkl + mse * self.dino_embed_size + ref_kl
 
             self.e2c_optimizer.zero_grad()
             loss.backward()
@@ -745,6 +747,8 @@ class DINOE2CSacAgent(RadSacAgent):
 
     def dino_embed(self, obs):
         with torch.no_grad():
+            if obs.shape[1] == 3:
+                return self.dino(obs)
             image1, image2 = torch.split(obs, [3, 3], dim=1)
             dino_emb1 = self.dino(image1)
             dino_emb2 = self.dino(image2)
@@ -755,7 +759,7 @@ class DINOE2CSacAgent(RadSacAgent):
             from e2c import MLPE2C
 
             self.e2c = MLPE2C(
-                obs_shape=(768,),
+                obs_shape=(self.dino_embed_size,),
                 action_dim=self.action_shape[0],
                 z_dimension=16,
                 crop_shape=None,

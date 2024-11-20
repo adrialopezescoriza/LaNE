@@ -18,7 +18,8 @@ from sac import (
     E2CILQRAgent,
 )
 
-import env_wrapper
+import envs.robosuite as robosuite
+from envs import make_env
 
 
 def parse_args():
@@ -236,25 +237,9 @@ def main():
     exp_id = str(int(np.random.random() * 100000))
     utils.set_seed_everywhere(args.seed)
 
-    env = env_wrapper.make(
-        domain_name=args.domain_name,
-        task_name=args.task_name,
-        seed=args.seed,
-        from_pixels=args.observation_type == "pixel",
-        height=args.pre_transform_image_size,
-        width=args.pre_transform_image_size,
-        cameras=args.cameras,
-    )
+    env = make_env(args)
 
-    test_env = env_wrapper.make(
-        domain_name=args.domain_name,
-        task_name=args.task_name,
-        seed=args.seed,
-        from_pixels=args.observation_type == "pixel",
-        height=args.pre_transform_image_size,
-        width=args.pre_transform_image_size,
-        cameras=args.cameras,
-    )
+    test_env = make_env(args)
 
     if args.encoder_type == "pixel" or args.encoder_type == "dino":
         env = utils.FrameStack(env, k=args.frame_stack)
@@ -423,5 +408,5 @@ def main():
 
 
 if __name__ == "__main__":
-    torch.multiprocessing.set_start_method("spawn")
+    # torch.multiprocessing.set_start_method("spawn")
     main()

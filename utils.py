@@ -88,7 +88,8 @@ class ReplayBuffer(Dataset):
         self.demo_ends = None
 
         if load_dir != "None" and load_dir is not None:
-            self.load(load_dir)
+            # self.load(load_dir)
+            self.load_from_modem_dataset(load_dir)
 
     def add(self, obs, action, reward, next_obs, done):
         np.copyto(self.obses[self.idx], obs)
@@ -188,7 +189,7 @@ class ReplayBuffer(Dataset):
 
     def sample_e2c(self):
         idxes = np.random.randint(
-            0, self.capacity if self.full else self.idx, size=self.batch_size
+            0, self.capacity if self.full else self.idx+1, size=self.batch_size
         )
 
         obs_non_crop = self.obses[idxes]
@@ -229,6 +230,36 @@ class ReplayBuffer(Dataset):
         self.last_save = self.idx
         torch.save(payload, path)
 
+    def load_from_modem_dataset(self, path, num_traj=10):
+        import pickle
+        import random
+
+        with open(path, 'rb') as f:
+            trajectories = pickle.load(f)
+        random.shuffle(trajectories)
+        trajectories = trajectories[:num_traj]
+
+        self.demo_starts = []
+        self.demo_ends = []
+        end = 0
+
+        def stack_observations(obs_list):
+            td = torch.stack(obs_list)
+            return torch.cat([td[k] for k in td.keys() if k.startswith("rgb")], dim=1).numpy()
+
+        for traj in trajectories:
+            start,end = end, end+len(traj['rewards'][1:])
+            self.obses[start:end] = stack_observations(traj['next_observations'][:-1])
+            self.next_obses[start:end] = stack_observations(traj['next_observations'][1:])
+            self.actions[start:end] = torch.stack(traj['actions'][1:]).numpy()
+            self.rewards[start:end] = torch.stack(traj['rewards'][1:]).unsqueeze(1).numpy()
+            self.not_dones[start:end] = [[True]] * (end-start-1) + [[False]]
+            self.idx = end
+            self.keep_loaded_end = end
+            self.demo_starts.append(start)
+            self.demo_ends.append(end)
+
+    
     def load(self, save_dir):
         chunks = os.listdir(save_dir)
         chunks = [c for c in chunks if c[-3:] == ".pt"]
@@ -279,7 +310,7 @@ class FrameStack(gym.Wrapper):
             shape=((shp[0] * k,) + shp[1:]),
             dtype=env.observation_space.dtype,
         )
-        self._max_episode_steps = env._max_episode_steps
+        self._max_episode_steps = env.max_episode_steps
         self.special_reset_save = None
 
     def reset(self, save_special_steps=False):
@@ -319,7 +350,7 @@ class FrameStack(gym.Wrapper):
         return frames
 
     def render(self, *args, **kwargs):
-        return self.env.render(*args, **kwargs)
+        return self.env.render()
 
 
 def create_mlp(in_features, out_features, n_hidden_layers=3, hidden_size=512):
