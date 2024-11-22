@@ -56,6 +56,7 @@ class ReplayBuffer(Dataset):
         capacity,
         batch_size,
         device,
+        n_demos,
         load_dir="None",
         image_size=84,
         transform=None,
@@ -89,7 +90,7 @@ class ReplayBuffer(Dataset):
 
         if load_dir != "None" and load_dir is not None:
             # self.load(load_dir)
-            self.load_from_modem_dataset(load_dir)
+            self.load_from_modem_dataset(load_dir, n_demos)
 
     def add(self, obs, action, reward, next_obs, done):
         np.copyto(self.obses[self.idx], obs)

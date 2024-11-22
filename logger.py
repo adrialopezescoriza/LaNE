@@ -6,6 +6,7 @@ import shutil
 import torch
 import torchvision
 import numpy as np
+import wandb
 from termcolor import colored
 
 FORMAT_CONFIG = {
@@ -91,21 +92,23 @@ class MetersGroup(object):
 
 
 class Logger(object):
-    def __init__(self, log_dir, use_tb=True, config='rl'):
-        self._log_dir = log_dir
-        if use_tb:
-            tb_dir = os.path.join(log_dir, 'tb')
+    def __init__(self, args, config='rl'):
+        self._log_dir = args.work_dir
+        if args.save_tb:
+            if args.enable_wandb:
+                wandb.init(project=args.wandb_project, name=args.task, sync_tensorboard=True, config=args)
+            tb_dir = os.path.join(args.work_dir, 'tb')
             if os.path.exists(tb_dir):
                 shutil.rmtree(tb_dir)
             self._sw = SummaryWriter(tb_dir)
         else:
             self._sw = None
         self._train_mg = MetersGroup(
-            os.path.join(log_dir, 'train.log'),
+            os.path.join(args.work_dir, 'train.log'),
             formating=FORMAT_CONFIG[config]['train']
         )
         self._eval_mg = MetersGroup(
-            os.path.join(log_dir, 'eval.log'),
+            os.path.join(args.work_dir, 'eval.log'),
             formating=FORMAT_CONFIG[config]['eval']
         )
 

@@ -25,7 +25,7 @@ from envs import make_env
 def parse_args():
     parser = argparse.ArgumentParser()
     # environment
-    parser.add_argument("--domain_name", default="cheetah")
+    parser.add_argument("--task", default="cheetah")
     parser.add_argument("--task_name", default=None)
     parser.add_argument("--pre_transform_image_size", default=100, type=int)
     parser.add_argument("--cameras", nargs="+", default=[0], type=int)
@@ -41,10 +41,17 @@ def parse_args():
     parser.add_argument("--replay_buffer_capacity", default=100000, type=int)
     parser.add_argument("--replay_buffer_load_dir", default="None", type=str)
     parser.add_argument(
-        "--replay_buffer_keep_loaded", default=False, action="store_true"
+        "--replay_buffer_keep_loaded", default=False
     )
     parser.add_argument("--model_dir", default=None, type=str)
     parser.add_argument("--model_step", default=None, type=str)
+    parser.add_argument("--n_demos", default=None, type=int)
+    # logging
+    parser.add_argument("--wandb_project", default=None, type=str)
+    parser.add_argument("--enable_wandb", default=False, type=bool)
+    parser.add_argument("--algorithm", default="LaNE", type=str)
+    parser.add_argument("--obs", default="rgbd", type=str)
+    parser.add_argument("--num_envs", default=1, type=int)
     # train
     parser.add_argument("--agent", default="sac", type=str)
     parser.add_argument("--init_steps", default=1000, type=int)
@@ -80,11 +87,11 @@ def parse_args():
     # misc
     parser.add_argument("--seed", default=1, type=int)
     parser.add_argument("--work_dir", default=".", type=str)
-    parser.add_argument("--save_tb", default=False, action="store_true")
-    parser.add_argument("--save_buffer", default=False, action="store_true")
-    parser.add_argument("--save_video", default=False, action="store_true")
-    parser.add_argument("--save_sac", default=False, action="store_true")
-    parser.add_argument("--detach_encoder", default=False, action="store_true")
+    parser.add_argument("--save_tb", default=False)
+    parser.add_argument("--save_buffer", default=False)
+    parser.add_argument("--save_video", default=False)
+    parser.add_argument("--save_sac", default=False)
+    parser.add_argument("--detach_encoder", default=False)
     # Regularization
     parser.add_argument("--v_clip_low", default=None, type=float)
     parser.add_argument("--v_clip_high", default=None, type=float)
@@ -95,7 +102,7 @@ def parse_args():
     parser.add_argument("--data_augs", default="crop", type=str)
     parser.add_argument("--log_interval", default=200, type=int)
     parser.add_argument("--pretrain_mode", default=None, type=str)
-    parser.add_argument("--conv_layer_norm", default=False, action="store_true")
+    parser.add_argument("--conv_layer_norm", default=False)
     parser.add_argument("--p_reward", default=1, type=float)
 
     args = parser.parse_args()
@@ -158,7 +165,7 @@ def evaluate(env, agent, video, num_episodes, L, step, args):
         L.log("eval/" + prefix + "success_rate", success_rate, step)
 
         filename = args.work_dir + "/eval_scores.npy"
-        key = args.domain_name + "-" + str(args.task_name) + "-" + args.data_augs
+        key = args.task + "-" + str(args.task_name) + "-" + args.data_augs
         try:
             log_data = np.load(filename, allow_pickle=True)
             log_data = log_data.item()
@@ -249,9 +256,9 @@ def main():
     ts = time.gmtime()
     ts = time.strftime("%m-%d", ts)
     if args.task_name is None:
-        env_name = args.domain_name
+        env_name = args.task
     else:
-        env_name = args.domain_name + "-" + args.task_name
+        env_name = args.task + "-" + args.task_name
     exp_name = (
         args.reward_type
         + "-"
@@ -314,6 +321,7 @@ def main():
         capacity=args.replay_buffer_capacity,
         batch_size=args.batch_size,
         device=device,
+        n_demos=args.n_demos,
         image_size=args.image_size,
         load_dir=args.replay_buffer_load_dir,
         keep_loaded=args.replay_buffer_keep_loaded,
@@ -327,7 +335,7 @@ def main():
     agent.replay_buffer = replay_buffer
     if args.model_dir is not None:
         agent.load(args.model_dir, args.model_step)
-    L = Logger(args.work_dir, use_tb=args.save_tb)
+    L = Logger(args)
 
     episode, episode_reward, done = 0, 0, True
     start_time = time.time()

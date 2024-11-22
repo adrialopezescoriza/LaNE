@@ -12,7 +12,6 @@ from argparse import Namespace
 
 def adapt_config(cfg):
     cfg_new = Namespace(
-         task=cfg.domain_name,
          max_episode_steps=100,
          episode_length=100,
          reward_mode=None,
