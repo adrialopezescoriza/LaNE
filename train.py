@@ -149,6 +149,9 @@ def evaluate(env, agent, video, num_episodes, L, step, args):
             L.log("eval/" + prefix + "episode_reward", episode_reward, step)
             all_ep_rewards.append(episode_reward)
 
+            if video.enabled:
+                L.log_video("eval/" + prefix + "video", video.frames, step)
+
         L.log("eval/" + prefix + "eval_time", time.time() - start_time, step)
         if num_episodes > 0:
             mean_ep_reward = np.mean(all_ep_rewards)

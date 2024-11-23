@@ -96,7 +96,7 @@ class Logger(object):
         self._log_dir = args.work_dir
         if args.save_tb:
             if args.enable_wandb:
-                wandb.init(project=args.wandb_project, name=args.task, sync_tensorboard=True, config=args)
+                wandb.init(project=args.wandb_project, name=args.task + "-" + str(args.seed), sync_tensorboard=True, config=args)
             tb_dir = os.path.join(args.work_dir, 'tb')
             if os.path.exists(tb_dir):
                 shutil.rmtree(tb_dir)
@@ -126,6 +126,7 @@ class Logger(object):
         if self._sw is not None:
             frames = torch.from_numpy(np.array(frames))
             frames = frames.unsqueeze(0)
+            frames = torch.permute(frames, (0,1,4,2,3))
             self._sw.add_video(key, frames, step, fps=30)
 
     def _try_sw_log_histogram(self, key, histogram, step):
