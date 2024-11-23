@@ -349,6 +349,7 @@ def main():
         if args.save_sac:
             agent.save(model_dir, step)
         L.log("eval/episode", episode, step)
+        L.log("eval/step", step, step)
         print("evaluating")
         evaluate(test_env, agent, video, args.num_eval_episodes, L, step, args)
 
@@ -375,6 +376,7 @@ def main():
             episode_step = 0
             episode += 1
             L.log("train/episode", episode, step)
+            L.log("train/step", step, step)
 
         # sample action for data collection
         if step < args.init_steps:
