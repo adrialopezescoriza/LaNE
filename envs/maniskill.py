@@ -10,6 +10,18 @@ from collections import deque
 import mani_skill.envs
 import envs.tasks.maniskill_stages
 
+from argparse import Namespace
+
+def adapt_config(cfg):
+    cfg_new = Namespace(
+         max_episode_steps=100,
+         episode_length=100,
+         reward_mode=None,
+         state_dim=None,
+         render_mode="rgb_array",
+		 img_size=None,
+    )
+    return Namespace(**vars(cfg), **vars(cfg_new))
 
 MANISKILL_TASKS = {
 	'lift-cube': dict(
@@ -106,7 +118,7 @@ def select_obs(obs):
 	"""
 	if not isinstance(obs, dict):
 		return obs
-	image = torch.stack((obs['sensor_data']['base_camera']['rgb'].permute(0,3,1,2), obs['sensor_data']['hand_camera']['rgb'].permute(0,3,1,2)), dim=1).squeeze()
+	image = torch.cat((obs['sensor_data']['base_camera']['rgb'].permute(0,3,1,2), obs['sensor_data']['hand_camera']['rgb'].permute(0,3,1,2)), dim=1).squeeze()
 	state_agent = flatten_state_dict(obs["agent"], use_torch=True)
 	state_extra = flatten_state_dict(obs["extra"], use_torch=True)
 	state = torch.cat([state_agent, state_extra], dim=-1).squeeze()
@@ -120,7 +132,7 @@ class ManiSkillWrapper(gym.Wrapper):
 		self.action_space = env.single_action_space
 		self.max_episode_steps = cfg.max_episode_steps
 
-		self._num_frames = cfg.get("frame_stack", 1)
+		self._num_frames = 1
 		self._frames = deque([], maxlen=self._num_frames)
 		self._state_frames = deque([], maxlen=self._num_frames)
 
@@ -194,26 +206,27 @@ def make_env(cfg):
 	"""
 	Make ManiSkill2 environment.
 	"""
+	cfg = adapt_config(cfg)
 	if cfg.task not in MANISKILL_TASKS:
 		raise ValueError('Unknown task:', cfg.task)
 	task_cfg = MANISKILL_TASKS[cfg.task]
-	camera_resolution = dict(width=cfg.camera.get("image_size", 64), height=cfg.camera.get("image_size", 64))
+	camera_resolution = dict(width=cfg.pre_transform_image_size, height=cfg.pre_transform_image_size)
 
 	# WARNING: If one env is already in GPU, the other ones must also be in GPU
 	env = gym.make(
 		task_cfg['env'],
 		obs_mode=cfg.obs,
 		control_mode=task_cfg['control_mode'],
-		num_envs=cfg.num_envs,
-		reward_mode=task_cfg.get("reward_mode", None),
+		num_envs=1,
+		reward_mode=task_cfg['reward_mode'],
 		render_mode='rgb_array',
 		sensor_configs=camera_resolution,
 		human_render_camera_configs=dict(width=384, height=384),
-		reconfiguration_freq=1 if cfg.num_envs > 1 else None,
-		sim_backend=cfg.get("sim_backend", "auto"),
+		reconfiguration_freq=None,
+		sim_backend="auto",
 		render_backend="auto",
 	)
 	env = ManiSkillWrapper(env, cfg)
 	cfg.state_dim = select_obs(env.unwrapped.get_obs())[1].shape[-1]
-	cfg.img_size = cfg.camera.image_size
+	cfg.img_size = cfg.pre_transform_image_size
 	return env

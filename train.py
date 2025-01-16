@@ -166,6 +166,8 @@ def evaluate(env, agent, video, num_episodes, L, step, args):
         L.log("eval/" + prefix + "mean_episode_reward", mean_ep_reward, step)
         L.log("eval/" + prefix + "best_episode_reward", best_ep_reward, step)
         L.log("eval/" + prefix + "success_rate", success_rate, step)
+        L.log("eval/" + prefix + "episode_success", success_rate, step)
+        L.log("eval/" + prefix + "step", step, step)
 
         filename = args.work_dir + "/eval_scores.npy"
         key = args.task + "-" + str(args.task_name) + "-" + args.data_augs
