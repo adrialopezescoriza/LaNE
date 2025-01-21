@@ -28,7 +28,7 @@ def parse_args():
     parser.add_argument("--task", default="cheetah")
     parser.add_argument("--task_name", default=None)
     parser.add_argument("--pre_transform_image_size", default=100, type=int)
-    parser.add_argument("--cameras", nargs="+", default=[0], type=int)
+    parser.add_argument("--cameras", nargs="+", default=[0,1], type=int)
     parser.add_argument("--observation_type", default="pixel")
     parser.add_argument("--reward_type", default="dense")
     parser.add_argument("--control", default=None)
