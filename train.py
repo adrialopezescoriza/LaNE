@@ -147,7 +147,7 @@ def evaluate(env, agent, video, num_episodes, L, step, args):
 
             video.save("%d.mp4" % step)
             L.log("eval/" + prefix + "episode_reward", episode_reward, step)
-            all_ep_rewards.append(episode_reward)
+            all_ep_rewards.append(episode_reward.item() if hasattr(episode_reward, "item") else episode_reward)
 
             if video.enabled:
                 L.log_video("eval/" + prefix + "video", video.frames, step)
