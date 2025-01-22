@@ -1,15 +1,15 @@
 --seed 0
---task mw-assembly-semi
+--task stack-cube-semi
 --n_demos 5
---replay_buffer_load_dir /hdd/adria/demo_data/Metaworld/rgb/tdmpc/Assembly_50.pkl
---cameras 0
+--replay_buffer_load_dir /hdd/adria/demo_data/Maniskill3/rgb/tdmpc/StackCube_200.pkl
+--cameras 0 1
 --action_repeat 2
 --frame_stack 1
 --num_updates 1
 --observation_type pixel
 --encoder_type pixel
 --pre_transform_image_size 128 
---image_size 224
+--image_size 112
 --agent dino_e2c_sac
 --critic_lr 0.001
 --actor_lr 0.001
