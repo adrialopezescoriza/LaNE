@@ -139,7 +139,7 @@ def evaluate(env, agent, video, num_episodes, L, step, args):
                     else:
                         action = agent.select_action(obs)
                 obs, reward, done, info = env.step(action)
-                if info.get("is_success") or reward > 0:
+                if info.get("is_success") or info.get("success"):
                     episode_success = True
                 video.record(env)
                 episode_reward += reward
