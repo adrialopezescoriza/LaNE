@@ -406,7 +406,7 @@ from mani_skill.envs.tasks.humanoid import TransportBoxEnv
 @register_env("HumanoidTransportBox_DrS_learn", max_episode_steps=100)
 class TransportBox_DrS_learn(DrS_BaseEnv, TransportBoxEnv):
     def __init__(self, *args, **kwargs):
-        self.n_stages = 3
+        self.n_stages = 1
         super().__init__(*args, **kwargs)
 
     def evaluate(self):
@@ -486,8 +486,8 @@ class TransportBox_DrS_learn(DrS_BaseEnv, TransportBoxEnv):
     def compute_stage_indicator(self):
         eval_info = self.evaluate()
         return {
-            'stage_1': (torch.logical_or(eval_info["box_grasped"], eval_info["box_at_correct_table_xy"])).float(), # allow releasing the cube when stacked
-            'stage_2': (torch.logical_or(eval_info["box_at_correct_table_xy"], eval_info["success"])).float(),
+            # 'stage_1': (torch.logical_or(eval_info["box_grasped"], eval_info["box_at_correct_table_xy"])).float(), # allow releasing the cube when stacked
+            # 'stage_2': (torch.logical_or(eval_info["box_at_correct_table_xy"], eval_info["success"])).float(),
         }
     
     @property
